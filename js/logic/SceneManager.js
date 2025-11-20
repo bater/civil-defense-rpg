@@ -85,7 +85,8 @@ class SceneManager {
     }
 
     generateTyphoonOptions(supplies) {
-        const hasFlashlight = supplies.includes('whistle');
+        const hasFlashlight = supplies.includes('flashlight');
+        const hasBattery = supplies.includes('battery');
         const hasRadio = supplies.includes('radio');
         const hasCandle = supplies.includes('candle');
         const hasLighter = supplies.includes('lighter');
@@ -93,8 +94,8 @@ class SceneManager {
 
         const options = [];
 
-        // 最佳選項：手電筒 + 收音機
-        if (hasFlashlight && hasRadio) {
+        // 最佳選項：手電筒 + 電池 + 收音機
+        if (hasFlashlight && hasBattery && hasRadio) {
             options.push({
                 text: "拿出避難包中的手電筒與收音機",
                 next: "ty_safe",
@@ -102,8 +103,8 @@ class SceneManager {
                 feedback: "正確！使用電池供電設備最安全，並透過收音機掌握災情。"
             });
         } 
-        // 次佳選項：只有手電筒
-        else if (hasFlashlight) {
+        // 次佳選項：手電筒 + 電池
+        else if (hasFlashlight && hasBattery) {
             options.push({
                 text: "拿出手電筒照明",
                 next: "ty_partial",
@@ -111,8 +112,17 @@ class SceneManager {
                 feedback: "有手電筒很好，但沒有收音機無法掌握即時災情。"
             });
         }
+        // 有手電筒但沒電池
+        else if (hasFlashlight && !hasBattery) {
+            options.push({
+                text: "想用手電筒但沒有電池",
+                next: "ty_no_light",
+                impact: { hp: -25, sanity: -15, score: -10 },
+                feedback: "手電筒需要電池才能使用！這是常見的疏忽。"
+            });
+        }
         // 手機照明（如果有行動電源）
-        else if (hasPhoneCharger) {
+        if (hasPhoneCharger) {
             options.push({
                 text: "用手機照明，靠行動電源維持電力",
                 next: "ty_phone_light",
@@ -140,7 +150,8 @@ class SceneManager {
             });
         }
         // 沒有任何照明
-        if (!hasFlashlight && !hasPhoneCharger && !(hasCandle && hasLighter)) {
+        const hasAnyLight = (hasFlashlight && hasBattery) || hasPhoneCharger || (hasCandle && hasLighter);
+        if (!hasAnyLight) {
             options.push({
                 text: "在黑暗中摸索",
                 next: "ty_no_light",

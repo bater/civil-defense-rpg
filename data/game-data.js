@@ -59,9 +59,25 @@ window.GAME_DATA = {
         },
         {
             "id": "whistle",
-            "name": "哨子 & 手電筒",
+            "name": "哨子",
+            "icon": "📢",
+            "weight": 0.1,
+            "correct": true,
+            "category": "tools"
+        },
+        {
+            "id": "flashlight",
+            "name": "手電筒",
             "icon": "🔦",
-            "weight": 1,
+            "weight": 0.5,
+            "correct": true,
+            "category": "tools"
+        },
+        {
+            "id": "battery",
+            "name": "乾電池",
+            "icon": "🔋",
+            "weight": 0.3,
             "correct": true,
             "category": "tools"
         },
@@ -227,23 +243,65 @@ window.GAME_DATA = {
         },
         "whistle": {
             "positive": {
-                "title": "及時求救",
-                "emoji": "🔦",
-                "text": "你聽到遠處有人呼救。你用手電筒照亮方向並吹哨子回應，成功引導救難隊找到受困者。",
+                "title": "哨聲求救",
+                "emoji": "📣",
+                "text": "你聽到遠處有微弱的呼救聲。你用力吹哨子回應，清脆的哨聲穿透雜音，成功引導救難隊找到受困者。",
                 "impact": {
                     "score": 20,
                     "sanity": 10
                 },
-                "feedback": "哨子和手電筒是救援的重要工具！"
+                "feedback": "哨子比人聲更響亮且省力，是求救的重要工具！"
             },
             "negative": {
-                "title": "手電筒故障",
-                "emoji": "🔦",
-                "text": "手電筒接觸不良，時亮時滅。你必須不斷拍打才能維持照明。",
+                "title": "哨子堵塞",
+                "emoji": "🚫",
+                "text": "你想吹哨子，但發現哨子內部有灰塵堵塞，聲音很小。你花了一些時間清理。",
                 "impact": {
                     "sanity": -5
                 },
-                "feedback": "準備備用電池或多一個手電筒會更好。"
+                "feedback": "定期檢查和清潔哨子很重要。"
+            }
+        },
+        "flashlight": {
+            "positive": {
+                "title": "照亮前路",
+                "emoji": "🔦",
+                "text": "停電的走廊一片漆黑，你用手電筒照亮前方，幫助其他人安全通過，避免跌倒受傷。",
+                "impact": {
+                    "score": 15,
+                    "sanity": 10
+                },
+                "feedback": "手電筒在黑暗中是最可靠的照明工具。"
+            },
+            "negative": {
+                "title": "手電筒故障",
+                "emoji": "💡",
+                "text": "手電筒接觸不良，時亮時滅。你必須不斷拍打才能維持照明，讓你感到焦慮。",
+                "impact": {
+                    "sanity": -5
+                },
+                "feedback": "準備備用手電筒或檢查電池接觸點。"
+            }
+        },
+        "battery": {
+            "positive": {
+                "title": "電力充足",
+                "emoji": "🔋",
+                "text": "你的手電筒電池快沒電了，幸好你帶了備用電池。更換後，明亮的光線讓你安心許多。",
+                "impact": {
+                    "score": 10,
+                    "sanity": 10
+                },
+                "feedback": "備用電池是照明設備的必需品。"
+            },
+            "negative": {
+                "title": "電池漏液",
+                "emoji": "⚠️",
+                "text": "你發現有一顆電池漏液了，腐蝕了電池盒。幸好還有其他電池可用，但你必須小心處理。",
+                "impact": {
+                    "sanity": -5
+                },
+                "feedback": "定期檢查電池，及時更換老舊電池。"
             }
         },
         "warm_clothes": {

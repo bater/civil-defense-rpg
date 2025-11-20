@@ -34,9 +34,25 @@
     },
     {
       "id": "whistle",
-      "name": "哨子 & 手電筒",
+      "name": "哨子",
+      "icon": "📢",
+      "weight": 0.1,
+      "correct": true,
+      "category": "tools"
+    },
+    {
+      "id": "flashlight",
+      "name": "手電筒",
       "icon": "🔦",
-      "weight": 1,
+      "weight": 0.5,
+      "correct": true,
+      "category": "tools"
+    },
+    {
+      "id": "battery",
+      "name": "乾電池",
+      "icon": "🔋",
+      "weight": 0.3,
       "correct": true,
       "category": "tools"
     },
