@@ -95,6 +95,22 @@
       "weight": 6,
       "correct": false,
       "category": "valuables"
+    },
+    {
+      "id": "candle",
+      "name": "蠟燭",
+      "icon": "🕯️",
+      "weight": 0.5,
+      "correct": true,
+      "category": "tools"
+    },
+    {
+      "id": "lighter",
+      "name": "打火機/火柴",
+      "icon": "🔥",
+      "weight": 0.2,
+      "correct": true,
+      "category": "tools"
     }
   ]
 }

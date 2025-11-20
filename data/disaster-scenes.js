@@ -96,11 +96,17 @@ window.DISASTER_SCENES_DATA = {
             text: "超級颱風登陸，窗外風雨交加，電力突然中斷了，室內一片漆黑。水壓也開始下降。",
             dynamicOptions: true
         },
-        ty_candle: {
-            title: "意外起火",
-            emoji: "🔥",
-            text: "強風吹倒了蠟燭，窗簾著火了！你手忙腳亂地滅火。",
-            options: [{ text: "好不容易滅火，等待風雨過去", next: "end_scene" }]
+        ty_candle_safe: {
+            title: "謹慎使用蠟燭",
+            emoji: "🕯️",
+            text: "你小心地將蠟燭放在安全的位置，遠離窗戶和易燃物。微弱的燭光提供了基本照明，讓你能看清周圍環境。",
+            options: [{ text: "小心看顧，等待風雨過去", next: "end_scene" }]
+        },
+        ty_phone_light: {
+            title: "手機照明",
+            emoji: "📱",
+            text: "你用手機的手電筒功能照明。雖然有行動電源，但手機電池消耗很快，你必須節省使用。",
+            options: [{ text: "節省電力，等待風雨過去", next: "end_scene" }]
         },
         ty_no_light: {
             title: "黑暗中摸索",

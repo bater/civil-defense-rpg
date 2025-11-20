@@ -87,44 +87,75 @@ class SceneManager {
     generateTyphoonOptions(supplies) {
         const hasFlashlight = supplies.includes('whistle');
         const hasRadio = supplies.includes('radio');
+        const hasCandle = supplies.includes('candle');
+        const hasLighter = supplies.includes('lighter');
+        const hasPhoneCharger = supplies.includes('phone_charger');
 
-        const options = [
-            { 
-                text: "點燃蠟燭照明", 
-                next: "ty_candle", 
-                impact: { hp: -50, sanity: -20 }, 
-                feedback: "極度危險！颱風天門窗緊閉，點蠟燭容易引發火災且消耗氧氣。" 
-            },
-            { 
-                text: "趁風雨還沒最大，出去買泡麵", 
-                next: "ty_out", 
-                impact: { hp: -80 }, 
-                feedback: "千萬不要！掉落的招牌與樹木可能致命。" 
-            }
-        ];
+        const options = [];
 
+        // 最佳選項：手電筒 + 收音機
         if (hasFlashlight && hasRadio) {
-            options.unshift({
+            options.push({
                 text: "拿出避難包中的手電筒與收音機",
                 next: "ty_safe",
                 impact: { sanity: 10, score: 20 },
                 feedback: "正確！使用電池供電設備最安全，並透過收音機掌握災情。"
             });
-        } else if (hasFlashlight) {
-            options.unshift({
+        } 
+        // 次佳選項：只有手電筒
+        else if (hasFlashlight) {
+            options.push({
                 text: "拿出手電筒照明",
                 next: "ty_partial",
                 impact: { sanity: 5, score: 5 },
                 feedback: "有手電筒很好，但沒有收音機無法掌握即時災情。"
             });
-        } else {
-            options.unshift({
+        }
+        // 手機照明（如果有行動電源）
+        else if (hasPhoneCharger) {
+            options.push({
+                text: "用手機照明，靠行動電源維持電力",
+                next: "ty_phone_light",
+                impact: { sanity: 0, score: 0 },
+                feedback: "手機可以照明，但電池消耗快，而且無法同時使用其他功能。"
+            });
+        }
+        // 蠟燭照明（需要蠟燭和打火機）
+        if (hasCandle && hasLighter) {
+            options.push({
+                text: "小心地點燃蠟燭照明",
+                next: "ty_candle_safe",
+                impact: { sanity: 5, score: 5 },
+                feedback: "在通風良好且遠離易燃物的情況下，蠟燭是可行的照明選擇。"
+            });
+        }
+        // 只有蠟燭或只有打火機（無法使用）
+        else if (hasCandle || hasLighter) {
+            const missing = hasCandle ? "打火機" : "蠟燭";
+            options.push({
+                text: `想點蠟燭但缺少${missing}`,
+                next: "ty_no_light",
+                impact: { hp: -20, sanity: -15, score: -5 },
+                feedback: `蠟燭和打火機必須同時攜帶才能使用。`
+            });
+        }
+        // 沒有任何照明
+        if (!hasFlashlight && !hasPhoneCharger && !(hasCandle && hasLighter)) {
+            options.push({
                 text: "在黑暗中摸索",
                 next: "ty_no_light",
                 impact: { hp: -30, sanity: -20, score: -10 },
-                feedback: "沒有手電筒讓你在黑暗中受傷。這就是為什麼避難包需要照明設備！"
+                feedback: "沒有照明設備讓你在黑暗中受傷。這就是為什麼避難包需要照明設備！"
             });
         }
+
+        // 錯誤選項：外出
+        options.push({ 
+            text: "趁風雨還沒最大，出去買泡麵", 
+            next: "ty_out", 
+            impact: { hp: -80 }, 
+            feedback: "千萬不要！掉落的招牌與樹木可能致命。" 
+        });
 
         return options;
     }
