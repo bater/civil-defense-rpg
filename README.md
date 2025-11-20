@@ -119,8 +119,35 @@ The game features a dynamic options system where player choices are affected by 
 - **No ID card at shelter** → Registration becomes difficult and time-consuming
 - **No warm clothes in cold weather** → Player suffers from cold exposure
 
+## Weight-Based Inventory System
+
+Players face a critical constraint: **maximum carrying capacity of 10 kg**. This forces strategic decision-making about which items to bring.
+
+### Item Weights
+
+| Item | Weight | Type | Icon |
+|------|--------|------|------|
+| 飲用水 (Water) | 3 kg | Essential | 💧 |
+| 罐頭/能量棒 (Food) | 2 kg | Essential | 🥫 |
+| 手搖式收音機 (Radio) | 2 kg | Essential | 📻 |
+| 急救箱 & 藥品 (First Aid) | 2 kg | Essential | 💊 |
+| 保暖衣物 (Warm Clothes) | 2 kg | Essential | 🧥 |
+| 救生繩索 (Rope) | 2 kg | Essential | 🪢 |
+| 哨子 & 手電筒 (Whistle) | 1 kg | Essential | 🔦 |
+| 行動電源 (Phone Charger) | 1 kg | Essential | 🔋 |
+| 身分證件 & 現金 (ID Card) | 0.5 kg | Essential | 🪪 |
+| 遊戲主機 (PS5) | 4 kg | Wrong | 🎮 |
+| 一打啤酒 (Beer) | 5 kg | Wrong | 🍺 |
+| 沉重的金條 (Gold) | 6 kg | Wrong | 🪙 |
+
+**Strategic Choices:**
+- Can only select 4-5 essential items due to weight limit
+- Must prioritize based on anticipated disaster type (unknown at selection time)
+- Wrong items consume valuable weight capacity
+
 ## Supply-Dependent Gameplay
 
+### Disaster Response
 Each inventory item has specific uses in disaster scenarios:
 
 | Item | Use Cases |
@@ -132,8 +159,28 @@ Each inventory item has specific uses in disaster scenarios:
 | 哨子 & 手電筒 (Whistle & Flashlight) | Signal for rescue when trapped, navigate in darkness |
 | 保暖衣物/輕便雨衣 (Warm Clothes) | Protection from cold in shelters, rain protection |
 | 身分證件影本 & 現金 (ID & Cash) | Register at shelters, access services, purchase supplies |
+| 行動電源 (Phone Charger) | Keep communication devices powered |
+| 救生繩索 (Rope) | Rescue operations, securing items |
 
 Wrong items (PS5, beer, gold bars) add weight and reduce score but don't provide benefits.
+
+### Random Item Events
+
+Before the disaster strikes, a random event occurs based on one of the player's selected items:
+
+**Positive Events (60% chance for correct items):**
+- Sharing water with dehydrated person → gain information
+- Using first aid to help injured child → receive supplies
+- Using flashlight to guide rescue team → increase score
+- Warm clothes during cold night → restore HP and sanity
+
+**Negative Events (40% chance for correct items, 100% for wrong items):**
+- Water bottle leaks → reduced effectiveness
+- Food expired → HP loss
+- Radio battery low → sanity loss
+- PS5/Beer/Gold → significant penalties
+
+This adds unpredictability and replayability while teaching that even correct items need maintenance.
 
 ## How to Extend
 
@@ -243,6 +290,33 @@ if (scene.type === 'quiz') {
 ```
 
 3. Implement rendering method in `Renderer` class
+
+### Adding Random Item Events
+
+To add new random events for items:
+
+1. Add event definition to `ITEM_EVENTS`:
+
+```javascript
+ITEM_EVENTS.new_item = {
+    positive: {
+        title: "Event Title",
+        emoji: "🎯",
+        text: "Event description...",
+        impact: { hp: 10, score: 15 },
+        feedback: "Feedback message"
+    },
+    negative: {
+        title: "Negative Event",
+        emoji: "⚠️",
+        text: "Negative description...",
+        impact: { hp: -10, sanity: -5 },
+        feedback: "Warning message"
+    }
+};
+```
+
+2. Events trigger automatically before disasters (60% positive for correct items, 100% negative for wrong items)
 
 ### Adding Supply-Dependent Scenes
 
@@ -354,20 +428,29 @@ if (impact.hunger) this.hunger = Math.max(0, Math.min(100, this.hunger + impact.
 
 ## Gameplay Example
 
-**Scenario 1: Well-Prepared Player**
-1. Player selects: water, food, radio, first aid, whistle, warm clothes, ID card
-2. Typhoon hits → Has flashlight and radio → Safely monitors situation (+20 score, +10 sanity)
-3. Gets injured → Has first aid kit → Treats wound properly (-10 HP instead of -30)
-4. Final score: High rank (A or S)
+**Scenario 1: Well-Prepared Player (Strategic Selection)**
+1. **Inventory (9.5 kg):** Water (3kg), Food (2kg), Radio (2kg), First Aid (2kg), ID Card (0.5kg)
+2. **Random Event:** Food event (positive) → Energy boost (+15 HP, +10 sanity, +10 score)
+3. **Disaster:** Typhoon hits → Has radio → Safely monitors situation (+20 score, +10 sanity)
+4. **Injury:** Gets hurt → Has first aid kit → Treats wound properly (-10 HP instead of -60)
+5. **Final Score:** High rank (A or S)
 
-**Scenario 2: Unprepared Player**
-1. Player selects: PS5, beer, gold bars (wrong items)
-2. Typhoon hits → No flashlight → Fumbles in darkness and gets injured (-30 HP, -20 sanity, -10 score)
-3. Gets injured → No first aid kit → Wound worsens (-60 HP instead of -40)
-4. Earthquake aftershock → No radio → Cannot receive warning (-20 HP)
-5. Final score: Low rank (C or death)
+**Scenario 2: Unprepared Player (Poor Choices)**
+1. **Inventory (10 kg):** PS5 (4kg), Beer (5kg), Whistle (1kg) - wasted weight on wrong items
+2. **Random Event:** Beer event (negative) → Alcohol dehydration (-20 HP, -10 sanity, -25 score)
+3. **Disaster:** Typhoon hits → No flashlight/radio → Fumbles in darkness (-30 HP, -20 sanity, -10 score)
+4. **Injury:** Gets hurt → No first aid kit → Wound worsens (-60 HP)
+5. **Final Score:** Low rank (C or death)
 
-This demonstrates how inventory choices directly impact survival outcomes.
+**Scenario 3: Difficult Trade-offs**
+1. **Inventory (10 kg):** Water (3kg), Whistle (1kg), Warm Clothes (2kg), Rope (2kg), Charger (1kg), ID (0.5kg)
+   - Chose variety over food/first aid
+2. **Random Event:** Rope event (positive) → Rescue someone (+25 score, +10 sanity)
+3. **Disaster:** Earthquake → Gets trapped → Has whistle → Quick rescue (+25 score)
+4. **Problem:** No food during long wait → Hunger (-15 HP)
+5. **Final Score:** Medium-High rank (B or A) - survived but with trade-offs
+
+This demonstrates how weight constraints force meaningful choices and create different survival outcomes.
 
 ## Testing
 

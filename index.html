@@ -124,6 +124,59 @@
             transform: scale(1.2);
         }
 
+        .inv-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .inv-item.disabled input {
+            cursor: not-allowed;
+        }
+
+        .weight-indicator {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .weight-bar {
+            width: 100%;
+            height: 20px;
+            background: #444;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .weight-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--warning-color));
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .weight-fill.overweight {
+            background: linear-gradient(90deg, var(--danger-color), #ff6b6b);
+        }
+
+        .weight-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .item-weight {
+            font-size: 0.85rem;
+            color: #999;
+            margin-left: auto;
+        }
+
         .feedback-box {
             background-color: rgba(255, 255, 255, 0.1);
             padding: 15px;
@@ -161,6 +214,7 @@ const CONFIG = {
     RANK_THRESHOLDS: { S: 250, A: 200, B: 150, C: 0 },
     CRITICAL_HP: 50,
     CRITICAL_SANITY: 50,
+    MAX_WEIGHT: 10, // Maximum weight capacity
     SCORES: {
         CORRECT_ITEM: 10,
         MISSING_ITEM: -5,
@@ -169,17 +223,197 @@ const CONFIG = {
 };
 
 const INVENTORY_ITEMS = [
-    { id: 'water', name: '飲用水 (3公升)', correct: true, weight: 3 },
-    { id: 'food', name: '罐頭/能量棒', correct: true, weight: 1 },
-    { id: 'radio', name: '手搖式收音機', correct: true, weight: 1 },
-    { id: 'ps5', name: '遊戲主機', correct: false, weight: 3 },
-    { id: 'firstaid', name: '急救箱 & 藥品', correct: true, weight: 1 },
-    { id: 'beer', name: '一打啤酒', correct: false, weight: 4 },
-    { id: 'id_card', name: '身分證件影本 & 現金', correct: true, weight: 0 },
-    { id: 'whistle', name: '哨子 & 手電筒', correct: true, weight: 0.5 },
-    { id: 'warm_clothes', name: '保暖衣物/輕便雨衣', correct: true, weight: 1 },
-    { id: 'gold', name: '沉重的金條', correct: false, weight: 5 }
+    { id: 'water', name: '飲用水 (3公升)', correct: true, weight: 3, icon: '💧' },
+    { id: 'food', name: '罐頭/能量棒', correct: true, weight: 2, icon: '🥫' },
+    { id: 'radio', name: '手搖式收音機', correct: true, weight: 2, icon: '📻' },
+    { id: 'ps5', name: '遊戲主機', correct: false, weight: 4, icon: '🎮' },
+    { id: 'firstaid', name: '急救箱 & 藥品', correct: true, weight: 2, icon: '💊' },
+    { id: 'beer', name: '一打啤酒', correct: false, weight: 5, icon: '🍺' },
+    { id: 'id_card', name: '身分證件影本 & 現金', correct: true, weight: 0.5, icon: '🪪' },
+    { id: 'whistle', name: '哨子 & 手電筒', correct: true, weight: 1, icon: '🔦' },
+    { id: 'warm_clothes', name: '保暖衣物/輕便雨衣', correct: true, weight: 2, icon: '🧥' },
+    { id: 'gold', name: '沉重的金條', correct: false, weight: 6, icon: '🪙' },
+    { id: 'phone_charger', name: '行動電源', correct: true, weight: 1, icon: '🔋' },
+    { id: 'rope', name: '救生繩索', correct: true, weight: 2, icon: '🪢' }
 ];
+
+// ============================================================================
+// RANDOM ITEM EVENTS
+// ============================================================================
+
+const ITEM_EVENTS = {
+    water: {
+        positive: {
+            title: "分享水源",
+            emoji: "💧",
+            text: "你遇到一位脫水的老人，你分享了一些水給他。他感激地告訴你附近有個更安全的避難點。",
+            impact: { score: 15, sanity: 10 },
+            feedback: "善行帶來回報！幫助他人也幫助了自己。"
+        },
+        negative: {
+            title: "水源污染",
+            emoji: "🦠",
+            text: "你發現水瓶有裂縫，部分水已經漏出並可能受到污染。你必須節省使用剩餘的水。",
+            impact: { sanity: -10 },
+            feedback: "定期檢查避難包的完整性很重要。"
+        }
+    },
+    food: {
+        positive: {
+            title: "能量補充",
+            emoji: "🥫",
+            text: "長時間的避難讓你飢餓難耐。你吃了能量棒，體力迅速恢復，思緒也清晰了。",
+            impact: { hp: 15, sanity: 10, score: 10 },
+            feedback: "充足的營養是生存的基礎。"
+        },
+        negative: {
+            title: "食物過期",
+            emoji: "🤢",
+            text: "你發現罐頭已經過期膨脹。雖然還能吃，但味道很差，讓你感到噁心。",
+            impact: { hp: -10, sanity: -5 },
+            feedback: "記得定期更換避難包中的食物。"
+        }
+    },
+    radio: {
+        positive: {
+            title: "關鍵情報",
+            emoji: "📻",
+            text: "收音機傳來緊急廣播：附近道路即將封閉，你及時改變路線避開了危險區域。",
+            impact: { score: 20, sanity: 15 },
+            feedback: "即時資訊在災難中至關重要！"
+        },
+        negative: {
+            title: "電池耗盡",
+            emoji: "🔋",
+            text: "收音機的電池快沒電了，你必須用力搖動手搖把才能繼續收聽，手臂痠痛。",
+            impact: { sanity: -5 },
+            feedback: "手搖式收音機雖然累，但總比沒有好。"
+        }
+    },
+    firstaid: {
+        positive: {
+            title: "救人一命",
+            emoji: "💊",
+            text: "你遇到一位受傷的孩子。你用急救箱幫他包紮止血，他的家人非常感激並分享了物資。",
+            impact: { score: 25, sanity: 15 },
+            feedback: "急救技能和裝備能拯救生命！"
+        },
+        negative: {
+            title: "藥品不足",
+            emoji: "💉",
+            text: "你發現急救箱裡的繃帶和藥品比預期的少。可能是之前整理時遺漏了。",
+            impact: { score: -5 },
+            feedback: "定期檢查並補充急救箱內容物。"
+        }
+    },
+    whistle: {
+        positive: {
+            title: "及時求救",
+            emoji: "🔦",
+            text: "你聽到遠處有人呼救。你用手電筒照亮方向並吹哨子回應，成功引導救難隊找到受困者。",
+            impact: { score: 20, sanity: 10 },
+            feedback: "哨子和手電筒是救援的重要工具！"
+        },
+        negative: {
+            title: "手電筒故障",
+            emoji: "🔦",
+            text: "手電筒接觸不良，時亮時滅。你必須不斷拍打才能維持照明。",
+            impact: { sanity: -5 },
+            feedback: "準備備用電池或多一個手電筒會更好。"
+        }
+    },
+    warm_clothes: {
+        positive: {
+            title: "保暖救命",
+            emoji: "🧥",
+            text: "夜晚氣溫驟降，許多人在避難所裡冷得發抖。你的保暖衣物讓你能安穩休息。",
+            impact: { hp: 10, sanity: 10, score: 15 },
+            feedback: "保暖衣物在災難中常被忽視，但非常重要。"
+        },
+        negative: {
+            title: "衣物潮濕",
+            emoji: "💦",
+            text: "你的保暖衣物被雨水打濕，保暖效果大打折扣。你感到寒冷和不適。",
+            impact: { hp: -10, sanity: -10 },
+            feedback: "防水袋能保護衣物不被弄濕。"
+        }
+    },
+    id_card: {
+        positive: {
+            title: "快速通關",
+            emoji: "🪪",
+            text: "檢查站需要身分驗證。你迅速出示證件和現金，順利通過並購買了必需品。",
+            impact: { score: 15, sanity: 10 },
+            feedback: "證件和現金在災難中非常實用。"
+        },
+        negative: {
+            title: "證件模糊",
+            emoji: "📄",
+            text: "你的證件影本因為潮濕而字跡模糊，工作人員花了很長時間才確認你的身分。",
+            impact: { sanity: -10 },
+            feedback: "用防水袋保護重要文件。"
+        }
+    },
+    phone_charger: {
+        positive: {
+            title: "通訊暢通",
+            emoji: "🔋",
+            text: "你的手機快沒電了。行動電源讓你能繼續接收緊急訊息並聯繫家人。",
+            impact: { score: 15, sanity: 15 },
+            feedback: "現代災難中，通訊設備至關重要。"
+        },
+        negative: {
+            title: "電源耗盡",
+            emoji: "🪫",
+            text: "行動電源本身沒充飽電，只能給手機充一點點電量。",
+            impact: { sanity: -5 },
+            feedback: "記得定期充電並檢查行動電源。"
+        }
+    },
+    rope: {
+        positive: {
+            title: "繩索救援",
+            emoji: "🪢",
+            text: "你發現有人困在二樓無法下來。你用繩索幫助他們安全降落，避免了跳樓受傷。",
+            impact: { score: 25, sanity: 10 },
+            feedback: "繩索在救援中有意想不到的用途！"
+        },
+        negative: {
+            title: "繩索磨損",
+            emoji: "🧵",
+            text: "你發現繩索有些磨損的痕跡，使用時必須格外小心。",
+            impact: { sanity: -5 },
+            feedback: "定期檢查裝備的狀況。"
+        }
+    },
+    ps5: {
+        negative: {
+            title: "累贅重物",
+            emoji: "🎮",
+            text: "遊戲機又重又沒用，還佔據了寶貴的背包空間。你後悔帶了這個東西。",
+            impact: { hp: -15, sanity: -15, score: -20 },
+            feedback: "災難時不要帶娛樂設備！"
+        }
+    },
+    beer: {
+        negative: {
+            title: "酒精誤事",
+            emoji: "🍺",
+            text: "啤酒很重，而且酒精會讓你脫水和判斷力下降。這是最糟糕的選擇。",
+            impact: { hp: -20, sanity: -10, score: -25 },
+            feedback: "災難時絕對不要帶酒精飲料！"
+        }
+    },
+    gold: {
+        negative: {
+            title: "黃金重擔",
+            emoji: "🪙",
+            text: "金條沉重無比，壓得你腰痠背痛。而且在災難中根本沒人會跟你交易黃金。",
+            impact: { hp: -25, sanity: -15, score: -30 },
+            feedback: "貴重金屬在災難中毫無用處，只會拖累你！"
+        }
+    }
+};
 
 const DISASTER_SCENARIOS = {
     earthquake: {
@@ -526,13 +760,19 @@ class SceneManager {
                 emoji: "🎒",
                 text: "你打包好了。如果真的發生緊急狀況，這些東西將決定你的命運。",
                 options: [
-                    { text: "準備好了，開始模擬生活", next: "random_event" }
+                    { text: "準備好了，開始模擬生活", next: "daily_life" }
                 ]
+            },
+            daily_life: {
+                title: "日常生活",
+                emoji: "�",
+                text: "日子過了一段時間，你的避難包就放在門口。某天...",
+                type: "item_event"
             },
             random_event: {
                 title: "突發狀況",
                 emoji: "🎲",
-                text: "日子過了一段時間，突然...",
+                text: "突然...",
                 type: "random"
             },
             end_scene: {
@@ -803,24 +1043,34 @@ class Renderer {
 
     renderInventorySelection() {
         let html = `
-            <div class="status-bar">請選擇要放入「緊急避難包」的物品 (建議重量有限，請明智選擇)</div>
+            <div class="status-bar">請選擇要放入「緊急避難包」的物品</div>
             <div class="scene-image">🎒</div>
-            <div class="description">你的背包空間有限。請勾選你認為在災難中最需要的物品：</div>
-            <div class="inventory-list">
+            <div class="description">你的背包承重有限 (最多 ${CONFIG.MAX_WEIGHT} kg)。請明智選擇最需要的物品：</div>
+            
+            <div class="weight-indicator">
+                <div>當前重量：<span id="current-weight">0</span> / ${CONFIG.MAX_WEIGHT} kg</div>
+                <div class="weight-bar">
+                    <div class="weight-fill" id="weight-fill" style="width: 0%"></div>
+                    <div class="weight-text" id="weight-text">0%</div>
+                </div>
+            </div>
+
+            <div class="inventory-list" id="inventory-list">
         `;
         
         INVENTORY_ITEMS.forEach(item => {
             html += `
-                <label class="inv-item">
-                    <input type="checkbox" value="${item.id}" id="check-${item.id}">
-                    ${item.name}
+                <label class="inv-item" data-item-id="${item.id}" data-weight="${item.weight}">
+                    <input type="checkbox" value="${item.id}" id="check-${item.id}" onchange="game.updateWeight()">
+                    <span>${item.icon} ${item.name}</span>
+                    <span class="item-weight">${item.weight}kg</span>
                 </label>
             `;
         });
 
         html += `
             </div>
-            <button onclick="game.confirmInventory()" style="width:100%; text-align:center; background:var(--accent-color)">確認打包</button>
+            <button id="confirm-btn" onclick="game.confirmInventory()" style="width:100%; text-align:center; background:var(--accent-color)" disabled>確認打包 (請選擇物品)</button>
         `;
         
         this.container.innerHTML = html;
@@ -918,6 +1168,11 @@ class Game {
             return;
         }
 
+        if (scene.type === 'item_event') {
+            this.triggerRandomItemEvent();
+            return;
+        }
+
         if (scene.type === 'random') {
             const nextScene = this.sceneManager.selectRandomDisaster();
             this.loadScene(nextScene);
@@ -932,11 +1187,133 @@ class Game {
         this.renderer.renderScene(scene);
     }
 
+    triggerRandomItemEvent() {
+        // Select a random item from player's supplies
+        const eligibleItems = this.state.supplies.filter(itemId => ITEM_EVENTS[itemId]);
+        
+        if (eligibleItems.length === 0) {
+            // No items with events, skip to disaster
+            this.loadScene('random_event');
+            return;
+        }
+
+        const randomItemId = eligibleItems[Math.floor(Math.random() * eligibleItems.length)];
+        const itemEvent = ITEM_EVENTS[randomItemId];
+        
+        // Determine if positive or negative event (60% positive for correct items, 100% negative for wrong items)
+        const item = INVENTORY_ITEMS.find(i => i.id === randomItemId);
+        let event;
+        
+        if (!item.correct) {
+            // Wrong items always trigger negative events
+            event = itemEvent.negative;
+        } else if (itemEvent.positive && itemEvent.negative) {
+            // 60% chance for positive event
+            event = Math.random() < 0.6 ? itemEvent.positive : itemEvent.negative;
+        } else {
+            event = itemEvent.positive || itemEvent.negative;
+        }
+
+        // Apply impact
+        this.state.applyImpact(event.impact);
+        
+        // Store feedback
+        if (event.feedback) {
+            this.state.lastFeedback = event.feedback;
+            this.state.addHistory(event.title, `使用了${item.name}`, event.feedback);
+        }
+
+        // Render the event scene
+        const eventScene = {
+            title: event.title,
+            emoji: event.emoji,
+            text: event.text,
+            options: [
+                { text: "繼續", next: "random_event" }
+            ]
+        };
+
+        this.currentScene = eventScene;
+        this.renderer.renderScene(eventScene);
+    }
+
+    updateWeight() {
+        const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        let totalWeight = 0;
+        
+        checkedBoxes.forEach(cb => {
+            const item = INVENTORY_ITEMS.find(i => i.id === cb.value);
+            if (item) totalWeight += item.weight;
+        });
+
+        const weightPercent = (totalWeight / CONFIG.MAX_WEIGHT) * 100;
+        const weightFill = document.getElementById('weight-fill');
+        const weightText = document.getElementById('weight-text');
+        const currentWeightSpan = document.getElementById('current-weight');
+        const confirmBtn = document.getElementById('confirm-btn');
+
+        if (currentWeightSpan) currentWeightSpan.textContent = totalWeight.toFixed(1);
+        if (weightFill) {
+            weightFill.style.width = Math.min(weightPercent, 100) + '%';
+            if (totalWeight > CONFIG.MAX_WEIGHT) {
+                weightFill.classList.add('overweight');
+            } else {
+                weightFill.classList.remove('overweight');
+            }
+        }
+        if (weightText) weightText.textContent = Math.round(weightPercent) + '%';
+
+        // Disable items that would exceed weight limit
+        const allItems = document.querySelectorAll('.inv-item');
+        allItems.forEach(itemEl => {
+            const checkbox = itemEl.querySelector('input[type="checkbox"]');
+            const itemWeight = parseFloat(itemEl.dataset.weight);
+            
+            if (!checkbox.checked && totalWeight + itemWeight > CONFIG.MAX_WEIGHT) {
+                itemEl.classList.add('disabled');
+                checkbox.disabled = true;
+            } else if (!checkbox.checked) {
+                itemEl.classList.remove('disabled');
+                checkbox.disabled = false;
+            }
+        });
+
+        // Enable/disable confirm button
+        if (confirmBtn) {
+            if (totalWeight > 0 && totalWeight <= CONFIG.MAX_WEIGHT) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '確認打包';
+                confirmBtn.style.opacity = '1';
+            } else if (totalWeight > CONFIG.MAX_WEIGHT) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = `超重！請減少 ${(totalWeight - CONFIG.MAX_WEIGHT).toFixed(1)} kg`;
+                confirmBtn.style.opacity = '0.5';
+            } else {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = '請選擇物品';
+                confirmBtn.style.opacity = '0.5';
+            }
+        }
+    }
+
     confirmInventory() {
         const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
         const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
         
+        // Calculate total weight
+        let totalWeight = 0;
+        selectedIds.forEach(id => {
+            const item = INVENTORY_ITEMS.find(i => i.id === id);
+            if (item) totalWeight += item.weight;
+        });
+
+        if (totalWeight > CONFIG.MAX_WEIGHT) {
+            alert(`背包超重！當前 ${totalWeight.toFixed(1)} kg，上限 ${CONFIG.MAX_WEIGHT} kg`);
+            return;
+        }
+
         this.state.supplies = selectedIds;
+        this.state.totalWeight = totalWeight;
         
         const evaluation = InventoryManager.evaluateSelection(selectedIds);
         this.state.score += evaluation.score;
