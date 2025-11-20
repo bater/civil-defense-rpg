@@ -95,6 +95,7 @@ Object containing disaster types, each with:
     emoji: "🏠",
     text: "Scene description",
     type: "normal|inventory|random|summary", // optional
+    dynamicOptions: true, // optional - generates options based on player's supplies
     options: [
         {
             text: "Choice text",
@@ -105,6 +106,34 @@ Object containing disaster types, each with:
     ]
 }
 ```
+
+### Dynamic Options System
+
+The game features a dynamic options system where player choices are affected by their inventory selection. When a scene has `dynamicOptions: true`, the `SceneManager.generateDynamicScene()` method creates different options based on what supplies the player packed.
+
+**Examples:**
+- **No flashlight during power outage** → Player must fumble in darkness and gets injured
+- **No first aid kit after injury** → Wounds worsen and HP drops significantly  
+- **No whistle when trapped** → Rescue takes much longer
+- **No radio during earthquake** → Cannot receive aftershock warnings
+- **No ID card at shelter** → Registration becomes difficult and time-consuming
+- **No warm clothes in cold weather** → Player suffers from cold exposure
+
+## Supply-Dependent Gameplay
+
+Each inventory item has specific uses in disaster scenarios:
+
+| Item | Use Cases |
+|------|-----------|
+| 飲用水 (Water) | Maintain hydration during long shelter stays |
+| 罐頭/能量棒 (Food) | Maintain energy and morale |
+| 手搖式收音機 (Radio) | Receive emergency broadcasts, aftershock warnings, evacuation routes |
+| 急救箱 & 藥品 (First Aid) | Treat injuries from falls, debris, accidents |
+| 哨子 & 手電筒 (Whistle & Flashlight) | Signal for rescue when trapped, navigate in darkness |
+| 保暖衣物/輕便雨衣 (Warm Clothes) | Protection from cold in shelters, rain protection |
+| 身分證件影本 & 現金 (ID & Cash) | Register at shelters, access services, purchase supplies |
+
+Wrong items (PS5, beer, gold bars) add weight and reduce score but don't provide benefits.
 
 ## How to Extend
 
@@ -215,6 +244,37 @@ if (scene.type === 'quiz') {
 
 3. Implement rendering method in `Renderer` class
 
+### Adding Supply-Dependent Scenes
+
+To create scenes where options change based on player inventory:
+
+1. Set `dynamicOptions: true` in the scene definition
+2. Add logic in `SceneManager.generateDynamicScene()`:
+
+```javascript
+if (sceneId === 'your_scene_id') {
+    const hasItem = supplies.includes('item_id');
+    
+    if (hasItem) {
+        dynamicScene.options = [{
+            text: "Use the item",
+            next: "success_scene",
+            impact: { score: 20 },
+            feedback: "Having the right tool made all the difference!"
+        }];
+    } else {
+        dynamicScene.options = [{
+            text: "Try without the item",
+            next: "failure_scene",
+            impact: { hp: -30, score: -10 },
+            feedback: "You struggled without the proper equipment."
+        }];
+    }
+}
+```
+
+3. Create corresponding success/failure scenes in your disaster scenario
+
 ### Adding Conditional Logic
 
 For scenes with dynamic behavior, add logic to scene options:
@@ -291,6 +351,23 @@ if (impact.hunger) this.hunger = Math.max(0, Math.min(100, this.hunger + impact.
     ]
 }
 ```
+
+## Gameplay Example
+
+**Scenario 1: Well-Prepared Player**
+1. Player selects: water, food, radio, first aid, whistle, warm clothes, ID card
+2. Typhoon hits → Has flashlight and radio → Safely monitors situation (+20 score, +10 sanity)
+3. Gets injured → Has first aid kit → Treats wound properly (-10 HP instead of -30)
+4. Final score: High rank (A or S)
+
+**Scenario 2: Unprepared Player**
+1. Player selects: PS5, beer, gold bars (wrong items)
+2. Typhoon hits → No flashlight → Fumbles in darkness and gets injured (-30 HP, -20 sanity, -10 score)
+3. Gets injured → No first aid kit → Wound worsens (-60 HP instead of -40)
+4. Earthquake aftershock → No radio → Cannot receive warning (-20 HP)
+5. Final score: Low rank (C or death)
+
+This demonstrates how inventory choices directly impact survival outcomes.
 
 ## Testing
 
