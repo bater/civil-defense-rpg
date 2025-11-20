@@ -1,0 +1,100 @@
+{
+  "items": [
+    {
+      "id": "water",
+      "name": "飲用水 (3公升)",
+      "icon": "💧",
+      "weight": 3,
+      "correct": true,
+      "category": "survival"
+    },
+    {
+      "id": "food",
+      "name": "罐頭/能量棒",
+      "icon": "🥫",
+      "weight": 2,
+      "correct": true,
+      "category": "survival"
+    },
+    {
+      "id": "radio",
+      "name": "手搖式收音機",
+      "icon": "📻",
+      "weight": 2,
+      "correct": true,
+      "category": "communication"
+    },
+    {
+      "id": "firstaid",
+      "name": "急救箱 & 藥品",
+      "icon": "💊",
+      "weight": 2,
+      "correct": true,
+      "category": "medical"
+    },
+    {
+      "id": "whistle",
+      "name": "哨子 & 手電筒",
+      "icon": "🔦",
+      "weight": 1,
+      "correct": true,
+      "category": "tools"
+    },
+    {
+      "id": "warm_clothes",
+      "name": "保暖衣物/輕便雨衣",
+      "icon": "🧥",
+      "weight": 2,
+      "correct": true,
+      "category": "clothing"
+    },
+    {
+      "id": "id_card",
+      "name": "身分證件影本 & 現金",
+      "icon": "🪪",
+      "weight": 0.5,
+      "correct": true,
+      "category": "documents"
+    },
+    {
+      "id": "phone_charger",
+      "name": "行動電源",
+      "icon": "🔋",
+      "weight": 1,
+      "correct": true,
+      "category": "communication"
+    },
+    {
+      "id": "rope",
+      "name": "救生繩索",
+      "icon": "🪢",
+      "weight": 2,
+      "correct": true,
+      "category": "tools"
+    },
+    {
+      "id": "ps5",
+      "name": "遊戲主機",
+      "icon": "🎮",
+      "weight": 4,
+      "correct": false,
+      "category": "entertainment"
+    },
+    {
+      "id": "beer",
+      "name": "一打啤酒",
+      "icon": "🍺",
+      "weight": 5,
+      "correct": false,
+      "category": "entertainment"
+    },
+    {
+      "id": "gold",
+      "name": "沉重的金條",
+      "icon": "🪙",
+      "weight": 6,
+      "correct": false,
+      "category": "valuables"
+    }
+  ]
+}

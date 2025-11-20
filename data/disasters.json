@@ -1,0 +1,16 @@
+{
+  "disasters": {
+    "earthquake": {
+      "name": "地震",
+      "startScene": "earthquake_start"
+    },
+    "typhoon": {
+      "name": "颱風",
+      "startScene": "typhoon_start"
+    },
+    "war": {
+      "name": "空襲",
+      "startScene": "war_start"
+    }
+  }
+}

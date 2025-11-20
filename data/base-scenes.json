@@ -1,0 +1,39 @@
+{
+  "scenes": {
+    "intro": {
+      "title": "序章：平靜的日常",
+      "emoji": "🏠",
+      "text": "現在是 2025 年的某個週末。新聞報導國際局勢逐漸緊張，氣象局也發布了颱風警報，且地震頻傳。政府呼籲民眾準備「緊急避難包」。你家裡有一些物資，你決定現在就整理背包。",
+      "type": "inventory"
+    },
+    "check_inventory": {
+      "title": "整備確認",
+      "emoji": "🎒",
+      "text": "你打包好了。如果真的發生緊急狀況，這些東西將決定你的命運。",
+      "options": [
+        {
+          "text": "準備好了，開始模擬生活",
+          "next": "daily_life"
+        }
+      ]
+    },
+    "daily_life": {
+      "title": "日常生活",
+      "emoji": "🏠",
+      "text": "日子過了一段時間，你的避難包就放在門口。某天...",
+      "type": "item_event"
+    },
+    "random_event": {
+      "title": "突發狀況",
+      "emoji": "🎲",
+      "text": "突然...",
+      "type": "random"
+    },
+    "end_scene": {
+      "title": "模擬結束",
+      "emoji": "🏁",
+      "text": "危機暫時解除了。現在來檢視你的生存狀況。",
+      "type": "summary"
+    }
+  }
+}

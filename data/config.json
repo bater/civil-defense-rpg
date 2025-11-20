@@ -1,0 +1,21 @@
+{
+  "game": {
+    "maxWeight": 10,
+    "rankThresholds": {
+      "S": 250,
+      "A": 200,
+      "B": 150,
+      "C": 0
+    },
+    "criticalHP": 50,
+    "criticalSanity": 50,
+    "scores": {
+      "correctItem": 10,
+      "missingItem": -5,
+      "wrongItem": -10
+    },
+    "eventProbability": {
+      "positiveForCorrectItems": 0.6
+    }
+  }
+}

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架構測試 - 生存指南</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            background: #2d2d2d;
+        }
+        .test-pass { color: #0f0; }
+        .test-fail { color: #f00; }
+        .test-pending { color: #ff0; }
+        h2 { color: #4caf50; }
+        pre { background: #1a1a1a; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 架構測試</h1>
+    <div id="test-results"></div>
+
+    <!-- Load all modules -->
+    <script src="data/disaster-scenes.js"></script>
+    <script src="js/models/GameState.js"></script>
+    <script src="js/models/DataLoader.js"></script>
+    <script src="js/logic/InventoryManager.js"></script>
+    <script src="js/logic/SceneManager.js"></script>
+    <script src="js/logic/EventManager.js"></script>
+    <script src="js/views/GameRenderer.js"></script>
+    <script src="js/controllers/GameController.js"></script>
+
+    <script>
+        const results = document.getElementById('test-results');
+
+        function addTest(name, status, message = '') {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            
+            const statusClass = status === 'pass' ? 'test-pass' : 
+                               status === 'fail' ? 'test-fail' : 'test-pending';
+            
+            const statusIcon = status === 'pass' ? '✅' : 
+                              status === 'fail' ? '❌' : '⏳';
+            
+            section.innerHTML = `
+                <h3 class="${statusClass}">${statusIcon} ${name}</h3>
+                ${message ? `<pre>${message}</pre>` : ''}
+            `;
+            results.appendChild(section);
+        }
+
+        async function runTests() {
+            addTest('開始測試', 'pending');
+
+            // Test 1: Check if all classes are defined
+            try {
+                const classes = [
+                    'GameState',
+                    'DataLoader',
+                    'InventoryManager',
+                    'SceneManager',
+                    'EventManager',
+                    'GameRenderer',
+                    'GameController'
+                ];
+                
+                const missing = classes.filter(cls => typeof window[cls] === 'undefined');
+                
+                if (missing.length === 0) {
+                    addTest('類別定義檢查', 'pass', `所有 ${classes.length} 個類別都已正確定義`);
+                } else {
+                    addTest('類別定義檢查', 'fail', `缺少類別: ${missing.join(', ')}`);
+                }
+            } catch (error) {
+                addTest('類別定義檢查', 'fail', error.message);
+            }
+
+            // Test 2: Check if disaster scenes data is loaded
+            try {
+                if (window.DISASTER_SCENES_DATA) {
+                    const disasters = Object.keys(window.DISASTER_SCENES_DATA);
+                    addTest('災難場景數據', 'pass', `載入了 ${disasters.length} 種災難: ${disasters.join(', ')}`);
+                } else {
+                    addTest('災難場景數據', 'fail', '未找到 DISASTER_SCENES_DATA');
+                }
+            } catch (error) {
+                addTest('災難場景數據', 'fail', error.message);
+            }
+
+            // Test 3: Initialize GameState
+            try {
+                const state = new GameState();
+                if (state.hp === 100 && state.sanity === 100 && state.score === 0) {
+                    addTest('GameState 初始化', 'pass', `HP: ${state.hp}, Sanity: ${state.sanity}, Score: ${state.score}`);
+                } else {
+                    addTest('GameState 初始化', 'fail', '初始值不正確');
+                }
+            } catch (error) {
+                addTest('GameState 初始化', 'fail', error.message);
+            }
+
+            // Test 4: Load data files
+            try {
+                const dataLoader = new DataLoader();
+                const success = await dataLoader.loadAll();
+                
+                if (success) {
+                    addTest('數據文件載入', 'pass', 
+                        `Config: ${dataLoader.config ? '✓' : '✗'}\n` +
+                        `Items: ${dataLoader.items ? dataLoader.items.length : 0} 個\n` +
+                        `Events: ${dataLoader.itemEvents ? Object.keys(dataLoader.itemEvents).length : 0} 個\n` +
+                        `Base Scenes: ${dataLoader.baseScenes ? Object.keys(dataLoader.baseScenes).length : 0} 個\n` +
+                        `Disasters: ${dataLoader.disasters ? Object.keys(dataLoader.disasters).length : 0} 個`
+                    );
+                } else {
+                    addTest('數據文件載入', 'fail', '載入失敗');
+                }
+
+                // Test 5: Test InventoryManager
+                if (success) {
+                    const inventoryManager = new InventoryManager(dataLoader, dataLoader.config);
+                    const weight = inventoryManager.calculateTotalWeight(['water', 'food']);
+                    const expected = 5; // 3 + 2
+                    
+                    if (weight === expected) {
+                        addTest('InventoryManager 重量計算', 'pass', `water + food = ${weight} kg`);
+                    } else {
+                        addTest('InventoryManager 重量計算', 'fail', `預期 ${expected}，得到 ${weight}`);
+                    }
+
+                    // Test overweight
+                    const allItems = dataLoader.items.map(i => i.id);
+                    const isOver = inventoryManager.isOverweight(allItems);
+                    if (isOver) {
+                        addTest('InventoryManager 超重檢查', 'pass', '正確檢測到全選會超重');
+                    } else {
+                        addTest('InventoryManager 超重檢查', 'fail', '應該檢測到超重');
+                    }
+                }
+
+                // Test 6: Test SceneManager
+                if (success) {
+                    const state = new GameState();
+                    const sceneManager = new SceneManager(dataLoader, state);
+                    
+                    const introScene = sceneManager.getScene('intro');
+                    if (introScene && introScene.type === 'inventory') {
+                        addTest('SceneManager 場景獲取', 'pass', `成功獲取 intro 場景`);
+                    } else {
+                        addTest('SceneManager 場景獲取', 'fail', '無法獲取 intro 場景');
+                    }
+
+                    // Test random disaster selection
+                    const disasterScene = sceneManager.selectRandomDisaster();
+                    if (disasterScene) {
+                        addTest('SceneManager 隨機災難', 'pass', `選擇了災難場景: ${disasterScene}`);
+                    } else {
+                        addTest('SceneManager 隨機災難', 'fail', '無法選擇災難');
+                    }
+                }
+
+                // Test 7: Test EventManager
+                if (success) {
+                    const eventManager = new EventManager(dataLoader, dataLoader.config);
+                    const supplies = ['water', 'food', 'radio'];
+                    const eventData = eventManager.selectRandomItemEvent(supplies);
+                    
+                    if (eventData) {
+                        addTest('EventManager 事件選擇', 'pass', 
+                            `物品: ${eventData.item.name}\n` +
+                            `事件: ${eventData.event.title}`
+                        );
+                    } else {
+                        addTest('EventManager 事件選擇', 'fail', '無法選擇事件');
+                    }
+                }
+
+                // Test 8: Test GameController initialization
+                try {
+                    const controller = new GameController();
+                    const initialized = await controller.initialize();
+                    
+                    if (initialized) {
+                        addTest('GameController 初始化', 'pass', '控制器成功初始化');
+                    } else {
+                        addTest('GameController 初始化', 'fail', '初始化失敗');
+                    }
+                } catch (error) {
+                    addTest('GameController 初始化', 'fail', error.message);
+                }
+
+            } catch (error) {
+                addTest('數據文件載入', 'fail', error.message);
+            }
+
+            // Final summary
+            const allTests = document.querySelectorAll('.test-section');
+            const passed = document.querySelectorAll('.test-pass').length;
+            const failed = document.querySelectorAll('.test-fail').length;
+            const total = allTests.length - 1; // Exclude "開始測試"
+
+            addTest('測試總結', passed === total ? 'pass' : 'fail',
+                `通過: ${passed}/${total}\n` +
+                `失敗: ${failed}/${total}\n` +
+                `成功率: ${Math.round((passed/total)*100)}%`
+            );
+        }
+
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>
